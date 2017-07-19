@@ -1,0 +1,51 @@
+#!/usr/bin/env python
+
+# Copyright 2017 Planet Labs, Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may not
+# use this file except in compliance with the License. You may obtain a copy of
+# the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations under
+# the License.
+
+import pytest
+
+from click.testing import CliRunner
+from StringIO import StringIO
+
+from cosmolog.bin.cli import human
+
+
+@pytest.fixture
+def cli_tester():
+    def tester(args, stdin):
+        runner = CliRunner()
+        stdin = StringIO(stdin)
+        return runner.invoke(human, args, catch_exceptions=False, input=stdin)
+    return tester
+
+
+def test_one_event(cli_tester):
+    l = ('{"version": 0, "stream_name": "telemetry", '
+         '"origin": "foobar.example.com", '
+         '"timestamp": "2016-09-02T16:34:12.019105Z", '
+         '"format": "s={sensor}", "level": 400,'
+         '"payload": {"sensor": 36.7}}')
+    expected = 'Sep 02 16:34:12 foobar.example.com telemetry: [INFO] s=36.7\n'
+    r = cli_tester([], l)
+    assert r.exit_code == 0
+    assert r.output == expected
+
+
+def test_bad_json(cli_tester):
+    l = '*$'
+    expected = "Failed to interpret '*$': No JSON object could be decoded\n"
+    r = cli_tester([], l)
+    assert r.exit_code == 0
+    assert r.output == expected
