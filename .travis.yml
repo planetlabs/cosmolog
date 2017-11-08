@@ -1,0 +1,19 @@
+language: python
+python:
+- 2.7
+env:
+- EXTRAS='[test]'
+install:
+- pip install -e .${EXTRAS}
+before_script:
+- flake8 .
+script:
+- pytest -vs
+deploy:
+  provider: pypi
+  user: planet
+  password:
+    secure: CGLeokIwHaefRmlhTyCS5JMDOMBy9QjQ4dkSvTRnXsKpLvDKbEw1M72o0syEQ5wYiQkSxgAu/XVlflgfaPYoMmBsqjM7YNpM5KPauBT2+OrU1bkmY36+KocDu5/5MZ9jBehHxipou0gRc+P+BevpdY2N//c/3Yj6PLJB9bgo3c0BJVlraawZrbzMTPAhWoIaDDQiSXuZQPSSPpdgw2rg5TU8cRchFDClDenk+qszvY5aW3BKTiIdC7D0/tgV+DvickghrGHOop3ZJeMWNYuAkQSLaeJ0VMI7nNMbNCvQ6W29BL94MI9+TfITZv7O9n61zhl4h8TCai/uls3hch+CgiNYv/7QDs1AO+TzkSVAqLcicBGVKUIT51w3w116GPg4KjVmWJ04B2v4LKKnXysSLZmYKHPHHKpw02+Z58+S5YSkPHI10rM6XigawDgo1pxnUlKTTF4x1/OnTgvIm2Gs9bVlP5uCD27Q1GrDdJQQG9vYIgQruBn6XS8Gv6BvQF67W9bxUbLXVQtWjojuXYiwLE65gog3Pd5sNHiKZf6gzs3/KpkAlcoYaEVFhfe/uLuuEBl7Pv9w9HaggeQCV3bPuBR/LCXWp7Kq6VgAUP2vU0lNmb6uo48tz00+ixQ/2drp3ZWhCUBMmQmmyKbKY2k90MFxO7hpMjKpcojjSHw2a8U=
+  on:
+    tags: true
+    repo: planetlabs/cosmolog
