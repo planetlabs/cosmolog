@@ -190,7 +190,7 @@ class Cosmologger(object):
         return self.fatal(*args, **kwargs)
 
     def exception(self, *args, **kwargs):
-        return self.error(*args, **kwargs)
+        return self.error(*args, exc_info=1, **kwargs)
 
     def error(self, *args, **kwargs):
         return self.log(logging.ERROR, *args, **kwargs)
@@ -208,9 +208,16 @@ class Cosmologger(object):
         return self.log(logging.DEBUG, *args, **kwargs)
 
     def log(self, lvl, *args, **kwargs):
+        payload = kwargs.copy()
+        payload.pop('extra', None)
+        payload.pop('exc_info', None)
+        extras = kwargs.get('extra', {})
+        extras.update(dict(payload=payload))
+        exc_info = kwargs.pop('exc_info', 0)
+
         if not args:
-            return self.logger.log(lvl, None, extra=dict(payload=kwargs))
-        return self.logger.log(lvl, *args, extra=dict(payload=kwargs))
+            return self.logger.log(lvl, None, exc_info=exc_info, extra=extras)
+        return self.logger.log(lvl, *args, exc_info=exc_info, extra=extras)
 
 
 class CosmologgerFormatter(logging.Formatter):
@@ -221,8 +228,6 @@ class CosmologgerFormatter(logging.Formatter):
         logging.Formatter.__init__(self, *args, **kwargs)
 
     def _prepare_exception(self, record):
-        if not record.exc_text:
-            record.exc_text = self.formatException(record.exc_info)
         return record.exc_text
 
     def _prepare_payload(self, record):
@@ -252,27 +257,18 @@ class CosmologgerFormatter(logging.Formatter):
         })
 
     def format(self, record):
+        super(CosmologgerFormatter, self).format(record)
         e = self._prepare_log_event(record)
         return e.json
 
 
-def _update_config_dict(d, u):
-    for k, v in u.iteritems():
-        if isinstance(v, collections.Mapping):
-            r = _update_config_dict(d.get(k, {}), v)
-            d[k] = r
-        else:
-            d[k] = u[k]
-    return d
-
-
-def setup_logging(level='INFO', origin=None, custom_config={}):
+def setup_logging(level='INFO', origin=None, custom_config=None):
     origin = origin or CosmologEvent.get_default_origin()
 
     # fail fast for bad origin.
     CosmologEvent._validate_origin(origin)
 
-    LOGGING_CONFIG = {
+    DEFAULT_CONFIG = {
         'version': 1,
         'disable_existing_loggers': False,
         'formatters': {
@@ -293,5 +289,5 @@ def setup_logging(level='INFO', origin=None, custom_config={}):
             'level': level,
         }
     }
-    c = _update_config_dict(LOGGING_CONFIG, custom_config)
+    c = custom_config or DEFAULT_CONFIG
     logging.config.dictConfig(c)

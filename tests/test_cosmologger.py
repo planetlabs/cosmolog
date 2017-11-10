@@ -18,6 +18,7 @@ import json
 import logging
 import logging.config
 import pytest
+import traceback
 
 from cosmolog import (setup_logging,
                       Cosmologger,
@@ -170,3 +171,27 @@ def test_python_logging_is_formatted_with_cosmolog(cosmolog_setup):
     assert out['format'] == 'the cosmos is vast'
     assert out['stream_name'] == 'cosmos'
     assert out['payload'] == {}
+
+
+def test_extra_reserved(cosmolog, cosmolog_setup):
+    '''ensure `extra` is reserved and not part of cosmolog payload'''
+    logpath = cosmolog_setup()
+    logger = logging.getLogger('cosmos')
+    logger.info('captains log', extra={'gravitational_wave': True})
+    out = _log_output(logpath)
+    assert out['payload'] == {}
+
+
+def test_exc_info(cosmolog, cosmolog_setup):
+    '''ensure `exc_info` can be used to pass along the stack trace'''
+    logpath = cosmolog_setup()
+    logger = logging.getLogger('cosmos')
+
+    try:
+        1 / 0
+    except Exception as e:
+        tb = traceback.format_exc()
+
+    logger.info(e, exc_info=1)
+    out = _log_output(logpath)
+    assert out['format'] == tb.strip()
