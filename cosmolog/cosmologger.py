@@ -48,6 +48,37 @@ LEVELS = {
     'TRACE': TRACE,
 }
 
+CRESET = '\033[0m'
+CRED = '\033[31m'
+CGREEN = '\033[32m'
+CYELLOW = '\033[33m'
+CBLUE = '\033[34m'
+BRED = '\033[41m'
+COLOR_CODES = [CRESET, CRED, CGREEN, CYELLOW, CBLUE, BRED]
+
+
+def _set_color(color):
+    def c(text):
+        return '{}{}{}'.format(color, text, CRESET)
+    return c
+
+
+red = _set_color(CRED)
+bg_red = _set_color(BRED)
+green = _set_color(CGREEN)
+yellow = _set_color(CYELLOW)
+blue = _set_color(CBLUE)
+
+
+LEVEL_COLORS = {
+    FATAL: bg_red('FATAL'),
+    ERROR: bg_red('ERROR'),
+    WARN: yellow('WARN'),
+    INFO: green('INFO'),
+    DEBUG: 'DEBUG',
+    TRACE: 'TRACE',
+}
+
 DEFAULT_SCHEMA_VERSION = 0
 
 
@@ -256,10 +287,65 @@ class CosmologgerFormatter(logging.Formatter):
             'payload': self._prepare_payload(record)
         })
 
+    def event_format(self, event):
+        return event.json
+
     def format(self, record):
         super(CosmologgerFormatter, self).format(record)
         e = self._prepare_log_event(record)
-        return e.json
+        return self.event_format(e)
+
+
+_default_fmt = '{timestamp} {origin} {stream_name}: [{level}] {payload}'
+_default_datefmt = {
+    True: '{}%b %d {}%H:%M:%S{}'.format(CRED, CGREEN, CRESET),
+    False: '%b %d %H:%M:%S'
+}
+
+
+class CosmologgerHumanFormatter(CosmologgerFormatter):
+
+    def __init__(self, *args, **kwargs):
+        self._color = kwargs.pop('color', False)
+        self._format = kwargs.pop('format', _default_fmt)
+        self._datefmt = kwargs.pop('datefmt', None)
+        if self._datefmt is None:
+            self._datefmt = _default_datefmt[self._color]
+        CosmologgerFormatter.__init__(self, *args, **kwargs)
+
+    def _format_timestamp(self, timestamp):
+        timestamp = dateparse(timestamp, ignoretz=True).replace(tzinfo=utc)
+        return timestamp.strftime(self._datefmt)
+
+    def event_format(self, e):
+        timestamp = self._format_timestamp(e['timestamp'])
+        if self._color:
+            origin = blue(e['origin'])
+            stream_name = yellow(e['stream_name'])
+            level = LEVEL_COLORS.get(e['level'])
+        else:
+            origin = e['origin']
+            stream_name = e['stream_name']
+            level = LEVELS[e['level']]
+
+        fmt, payload = e['format'], e['payload']
+        if fmt:
+            try:
+                payload = fmt.format(**payload)
+            except KeyError:
+                payload = 'BadLogFormat("{format}") {payload}'.format(**e)
+        else:
+            payload = ', '.join('{}: {}'.format(k, v)
+                                for k, v in payload.iteritems())
+
+        output = self._format.format(
+            timestamp=timestamp,
+            origin=origin,
+            stream_name=stream_name,
+            level=level,
+            payload=payload)
+
+        return output
 
 
 def setup_logging(level='INFO', origin=None, custom_config=None):

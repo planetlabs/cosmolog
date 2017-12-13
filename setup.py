@@ -44,7 +44,8 @@ setup(name='cosmolog',
       extras_require={
           'test': [
               'pytest>=3.0.2',
-              'flake8==3.2.0'
+              'flake8==3.2.0',
+              'freezegun==0.3.9',
           ]
       },
       entry_points='''

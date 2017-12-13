@@ -20,49 +20,55 @@ import logging.config
 import pytest
 import traceback
 
+try:
+    import cStringIO as StringIO
+except ImportError:
+    import StringIO
+
+from freezegun import freeze_time
+
 from cosmolog import (setup_logging,
                       Cosmologger,
                       CosmologgerException,
-                      CosmologgerFormatter)
+                      CosmologgerFormatter,
+                      CosmologgerHumanFormatter)
 
 
 @pytest.fixture
-def log_file(tmpdir, random_name):
-    def make_log_file():
-        return tmpdir.mkdir('tmp').join(random_name)
-    return make_log_file
-
-
-@pytest.fixture
-def cosmolog_setup(log_file):
-    def prepare_cosmolog_setup(level='INFO', origin=None, custom_config={}):
-        f = log_file()
+def cosmolog_setup():
+    '''Sets up cosmolog and returns the log file as a StringIO object'''
+    def prepare_cosmolog_setup(level='INFO', origin=None, formatter='cosmolog'):  # noqa: E501
+        log_stream = StringIO.StringIO()
         origin = origin or 'jupiter.planets.com'
-        if custom_config == {}:
-            custom_config = {
-                'version': 1,
-                'disable_existing_loggers': False,
-                'formatters': {
-                    'cosmolog': {
-                        '()': CosmologgerFormatter,
-                        'origin': origin,
-                        'version': 0,
-                    },
+        custom_config = {
+            'version': 1,
+            'disable_existing_loggers': False,
+            'formatters': {
+                'cosmolog': {
+                    '()': CosmologgerFormatter,
+                    'origin': origin,
+                    'version': 0,
                 },
-                'handlers': {
-                    'f': {
-                        'class': 'logging.FileHandler',
-                        'formatter': 'cosmolog',
-                        'filename': f.strpath,
-                    },
-                },
-                'root': {
-                    'handlers': ['f'],
-                    'level': level,
+                'human': {
+                    '()': CosmologgerHumanFormatter,
+                    'origin': origin,
+                    'version': 0,
                 }
+            },
+            'handlers': {
+                'h': {
+                    'class': 'logging.StreamHandler',
+                    'formatter': formatter,
+                    'stream': log_stream,
+                },
+            },
+            'root': {
+                'handlers': ['h'],
+                'level': level,
             }
+        }
         setup_logging(level, origin, custom_config=custom_config)
-        return f.strpath
+        return log_stream
     return prepare_cosmolog_setup
 
 
@@ -73,10 +79,9 @@ def cosmolog():
     return make_cosmolog
 
 
-def _log_output(filepath):
-    with open(filepath) as f:
-        data = f.readline().strip()
-    return json.loads(data)
+def _log_output(stream):
+    logline = stream.getvalue().split('\n').pop(0)
+    return json.loads(logline)
 
 
 def test_stream_is_validated(cosmolog):
@@ -102,31 +107,59 @@ def test_required_fields(cosmolog, cosmolog_setup):
 
 
 def test_log_message(cosmolog, cosmolog_setup):
-    logpath = cosmolog_setup()
+    logstream = cosmolog_setup()
     logger = cosmolog()
     logger.info('the pale blue dot')
-    out = _log_output(logpath)
+    out = _log_output(logstream)
     assert out['format'] == 'the pale blue dot'
 
 
+@freeze_time("1970-04-13T03:07:53Z")
+def test_human_log_message(cosmolog, cosmolog_setup):
+    logstream = cosmolog_setup(formatter='human')
+    logger = cosmolog()
+    logger.error('Something bad happened')
+    logline = logstream.getvalue().split('\n').pop(0)
+    assert logline == 'Apr 13 03:07:53 jupiter.planets.com star_stuff: [ERROR] Something bad happened'  # noqa: E501
+
+
 def test_payload(cosmolog, cosmolog_setup):
-    logpath = cosmolog_setup()
+    logstream = cosmolog_setup()
     logger = cosmolog()
     logger.info(ganymede_g=1.428, europa_g=1.315)
-    out = _log_output(logpath)
+    out = _log_output(logstream)
     assert out['format'] is None
     assert out['payload']['ganymede_g'] == 1.428
     assert out['payload']['europa_g'] == 1.315
 
 
+@freeze_time("1970-04-13T03:07:53Z")
+def test_human_payload(cosmolog, cosmolog_setup):
+    logstream = cosmolog_setup(formatter='human')
+    logger = cosmolog()
+    logger.error(component='oxygen tank')
+    logline = logstream.getvalue().split('\n').pop(0)
+    assert logline == 'Apr 13 03:07:53 jupiter.planets.com star_stuff: [ERROR] component: oxygen tank'  # noqa: E501
+
+
 def test_format_and_payload(cosmolog, cosmolog_setup):
-    logpath = cosmolog_setup()
+    logstream = cosmolog_setup()
     logger = cosmolog()
     msg = 'the observable universe consists of {n_galaxy} galaxies'
     logger.info(msg, n_galaxy='2 trillion')
-    out = _log_output(logpath)
+    out = _log_output(logstream)
     assert out['format'] == msg
     assert out['payload']['n_galaxy'] == '2 trillion'
+
+
+@freeze_time("1970-04-13T03:07:53Z")
+def test_human_format_and_payload(cosmolog, cosmolog_setup):
+    logstream = cosmolog_setup(formatter='human')
+    logger = cosmolog()
+    msg = 'the {component} has exploded'
+    logger.error(msg, component='oxygen tank')
+    logline = logstream.getvalue().split('\n').pop(0)
+    assert logline == 'Apr 13 03:07:53 jupiter.planets.com star_stuff: [ERROR] the oxygen tank has exploded'  # noqa: E501
 
 
 def test_payload_is_validated(cosmolog, cosmolog_setup, capsys):
@@ -139,8 +172,18 @@ def test_payload_is_validated(cosmolog, cosmolog_setup, capsys):
     assert 'ValidationError' in err
 
 
+@freeze_time("1970-04-13T03:07:53Z")
+def test_human_format_invalid(cosmolog, cosmolog_setup):
+    logstream = cosmolog_setup(formatter='human')
+    logger = cosmolog()
+    msg = 'the {blarg} has exploded'
+    logger.error(msg, component='oxygen tank')
+    logline = logstream.getvalue().split('\n').pop(0)
+    assert logline == 'Apr 13 03:07:53 jupiter.planets.com star_stuff: [ERROR] BadLogFormat("the {blarg} has exploded") {\'component\': \'oxygen tank\'}'  # noqa: E501
+
+
 def test_can_log_all_levels(cosmolog, cosmolog_setup):
-    logpath = cosmolog_setup('DEBUG')
+    logstream = cosmolog_setup('DEBUG')
     logger = cosmolog()
     levels = [(getattr(logger, 'debug'), 500),
               (getattr(logger, 'info'), 400),
@@ -151,7 +194,7 @@ def test_can_log_all_levels(cosmolog, cosmolog_setup):
               (getattr(logger, 'fatal'), 100)]
     for l in levels:
         l[0]('earth')
-        out = _log_output(logpath)
+        out = _log_output(logstream)
         out['level'] == l[1]
 
 
@@ -163,11 +206,11 @@ def test_python_logging(cosmolog, cosmolog_setup):
 
 
 def test_python_logging_is_formatted_with_cosmolog(cosmolog_setup):
-    logpath = cosmolog_setup()
+    logstream = cosmolog_setup()
     logger = logging.getLogger('cosmos')
     logger.setLevel(logging.DEBUG)
     logger.debug('the cosmos is vast')
-    out = _log_output(logpath)
+    out = _log_output(logstream)
     assert out['format'] == 'the cosmos is vast'
     assert out['stream_name'] == 'cosmos'
     assert out['payload'] == {}
@@ -175,16 +218,16 @@ def test_python_logging_is_formatted_with_cosmolog(cosmolog_setup):
 
 def test_extra_reserved(cosmolog, cosmolog_setup):
     '''ensure `extra` is reserved and not part of cosmolog payload'''
-    logpath = cosmolog_setup()
+    logstream = cosmolog_setup()
     logger = logging.getLogger('cosmos')
     logger.info('captains log', extra={'gravitational_wave': True})
-    out = _log_output(logpath)
+    out = _log_output(logstream)
     assert out['payload'] == {}
 
 
 def test_exc_info(cosmolog, cosmolog_setup):
     '''ensure `exc_info` can be used to pass along the stack trace'''
-    logpath = cosmolog_setup()
+    logstream = cosmolog_setup()
     logger = logging.getLogger('cosmos')
 
     try:
@@ -193,5 +236,5 @@ def test_exc_info(cosmolog, cosmolog_setup):
         tb = traceback.format_exc()
 
     logger.info(e, exc_info=1)
-    out = _log_output(logpath)
+    out = _log_output(logstream)
     assert out['format'] == tb.strip()
