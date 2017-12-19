@@ -258,11 +258,11 @@ class CosmologgerFormatter(logging.Formatter):
         self._version = kwargs.pop('version')
         logging.Formatter.__init__(self, *args, **kwargs)
 
-    def _prepare_exception(self, record):
-        return record.exc_text
-
     def _prepare_payload(self, record):
-        return record.__dict__.get('payload', {})
+        pld = record.__dict__.get('payload', {})
+        if record.exc_info:
+            pld['exc_text'] = record.exc_text
+        return pld
 
     def _prepare_timestamp(self, record):
         if hasattr(record, 'created'):
@@ -270,10 +270,10 @@ class CosmologgerFormatter(logging.Formatter):
         return datetime.now(utc)
 
     def _prepare_format(self, record):
-        if record.exc_info:
-            return self._prepare_exception(record)
         if record.msg is None:
             return None
+        if record.exc_info and '{exc_text}' not in record.msg:
+            return record.getMessage() + '\n{exc_text}'
         return record.getMessage()
 
     def _prepare_log_event(self, record):

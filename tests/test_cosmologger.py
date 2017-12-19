@@ -230,11 +230,53 @@ def test_exc_info(cosmolog, cosmolog_setup):
     logstream = cosmolog_setup()
     logger = logging.getLogger('cosmos')
 
-    try:
+    def fail(fmt):
         1 / 0
+
+    try:
+        fail('Extra braces for extra fail {}')
     except Exception as e:
         tb = traceback.format_exc()
 
-    logger.info(e, exc_info=1)
+    logger.error(e, exc_info=1)
     out = _log_output(logstream)
-    assert out['format'] == tb.strip()
+    assert out['format'] == str(e) + '\n{exc_text}'
+    assert out['payload'] == {'exc_text': tb.strip()}
+
+
+@freeze_time("1970-04-13T03:07:53Z")
+def test_exc_info_human(cosmolog, cosmolog_setup):
+    '''ensure `exc_info` can be used to pass along the stack trace'''
+    logstream = cosmolog_setup(formatter='human')
+    logger = logging.getLogger('apollo13')
+
+    def fail(fmt):
+        1 / 0
+
+    try:
+        fail('Extra braces for extra fail {}')
+    except Exception:
+        tb = traceback.format_exc()
+
+    logger.error('Something bad happened', exc_info=1)
+    out = logstream.getvalue()
+    assert out == 'Apr 13 03:07:53 jupiter.planets.com apollo13: [ERROR] Something bad happened\n{}'.format(tb)  # noqa: E501
+
+
+@freeze_time("1970-04-13T03:07:53Z")
+def test_exception_human(cosmolog, cosmolog_setup):
+    '''ensure `exception` can be used to pass along the stack trace'''
+    logstream = cosmolog_setup(formatter='human')
+    logger = logging.getLogger('apollo13')
+
+    def fail(fmt):
+        1 / 0
+
+    try:
+        fail('Extra braces for extra fail {}')
+    except Exception:
+        tb = traceback.format_exc()
+        logger.exception('Something bad happened')
+
+    out = logstream.getvalue()
+    assert out == 'Apr 13 03:07:53 jupiter.planets.com apollo13: [ERROR] Something bad happened\n{}'.format(tb)  # noqa: E501
