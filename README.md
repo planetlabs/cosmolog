@@ -143,6 +143,16 @@ mapped to in the log output:
 | DEBUG | 500           |
 | TRACE | 600           |
 
+## Advanced usage: Exceptions
+
+Normally, all keyword arguments are faithfully passed into the `CosmologEvent`
+payload field, except in the case of logging exceptions. Here, the conventions
+of the builtin logging library are followed. Calling `Cosmologger.exception` or
+any of the other logging methods with the keyword argument `exc_info=1` will
+add traceback information to the payload's `exc_text` field. If there is no
+`{exc_text}` specified in the format string, then the format field will be
+appended with `'\n{exc_text}'`.
+
 ## Development
 
     pip install -e .[test]

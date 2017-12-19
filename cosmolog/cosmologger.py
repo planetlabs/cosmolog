@@ -272,7 +272,7 @@ class CosmologgerFormatter(logging.Formatter):
     def _prepare_format(self, record):
         if record.msg is None:
             return None
-        if record.exc_info and 'exc_text' not in record.msg:
+        if record.exc_info and '{exc_text}' not in record.msg:
             return record.getMessage() + '\n{exc_text}'
         return record.getMessage()
 
