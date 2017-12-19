@@ -88,7 +88,8 @@ By default, `origin` is set to `socket.getfqdn()`. To set it yourself:
 
 You can configure Cosmologger with a custom configuration dictionary, as
 you would with regular Python logging. Let's say you want to stream your log 
-entries to a file as well as stdout:
+entries to a file in the CosmologEvent schema, as well as stderr in a human-
+readable format:
 
     my_custom_config = {
         'version': 1,
@@ -99,6 +100,11 @@ entries to a file as well as stdout:
                 'origin': origin,
                 'version': 0,
             },
+            'cosmolog-human': {
+                '()': CosmologgerHumanFormatter,
+                'origin': origin,
+                'version': 0,
+            },
         },
         'handlers': {
             'file_handler': {
@@ -106,9 +112,14 @@ entries to a file as well as stdout:
                 'formatter': 'cosmolog',
                 'filename': '/path/to/my/file.log'
             },
+            'stderr': {
+                'class': 'logging.StreamHandler',
+                'formatter': 'cosmolog-human',
+		'color': True
+            },
         },
         'root': {
-            'handlers': ['file_handler'],
+            'handlers': ['file_handler', 'stderr'],
             'level': 'DEBUG',
         }
     }

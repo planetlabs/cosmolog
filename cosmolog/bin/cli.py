@@ -15,12 +15,9 @@
 # the License.
 
 import click
-import re
 
-from dateutil.parser import parse as dateparse
-from pytz import utc
-
-from cosmolog import LEVELS, CosmologEvent, CosmologgerException
+from cosmolog import (
+    CosmologEvent, CosmologgerException, CosmologgerHumanFormatter)
 
 
 @click.group(context_settings={'help_option_names': ['-h', '-?', '--help']})
@@ -29,109 +26,20 @@ def cli():
     pass
 
 
-def iso8601_to_datetime(iso8601):
-    return dateparse(iso8601, ignoretz=True).replace(tzinfo=utc)
+def _format_exception(line, e, no_color):
+    msg = 'Failed to interpret \'{}\': {}'.format(line, e.message)
+    if not no_color:
+        msg = '\033[31m{}\033[0m'.format(msg)
+    return msg
 
 
-CRESET = '\033[0m'
-CRED = '\033[31m'
-CGREEN = '\033[32m'
-CYELLOW = '\033[33m'
-CBLUE = '\033[34m'
-BRED = '\033[41m'
-COLOR_CODES = [CRESET, CRED, CGREEN, CYELLOW, CBLUE, BRED]
-
-
-def _set_color(color):
-    def c(text):
-        return '{}{}{}'.format(color, text, CRESET)
-    return c
-
-
-red = _set_color(CRED)
-bg_red = _set_color(BRED)
-green = _set_color(CGREEN)
-yellow = _set_color(CYELLOW)
-blue = _set_color(CBLUE)
-
-
-def _format_payload(fmt, **kwargs):
-    output = ''
-    if fmt:
-        try:
-            output += fmt.format(**kwargs)
-        except KeyError:
-            output += 'BadLogFormat {}'.format(fmt)
-    else:
-        for k, v in kwargs.iteritems():
-            output += '{}: {}, '.format(k, v)
-    return output
-
-
-_default_datefmt = '{}%b %d {}%H:%M:%S{}'.format(CRED, CGREEN, CRESET)
-
-
-def _format_timestamp(timestamp, datefmt):
-    timestamp = iso8601_to_datetime(timestamp)
-    if datefmt:
-        return red(timestamp.strftime(datefmt))
-    return timestamp.strftime(_default_datefmt)
-
-
-LEVEL_COLORS = {
-    LEVELS['FATAL']: bg_red(LEVELS[LEVELS['FATAL']]),
-    LEVELS['ERROR']: bg_red(LEVELS[LEVELS['ERROR']]),
-    LEVELS['WARN']: yellow(LEVELS[LEVELS['WARN']]),
-    LEVELS['INFO']: green(LEVELS[LEVELS['INFO']]),
-    LEVELS['DEBUG']: LEVELS[LEVELS['DEBUG']],
-    LEVELS['TRACE']: LEVELS[LEVELS['TRACE']],
-}
-
-
-def _format_level(lvl):
-    return LEVEL_COLORS.get(lvl)
-
-
-def _clear_colors(line):
-    for c in COLOR_CODES:
-        line = re.sub(re.escape(c), '', line)
-    return line
-
-
-_default_fmt = '{timestamp} {origin} {stream_name}: [{level}] {payload}'
-
-
-def process(line, verbosity, datefmt, no_color):
+def process(line, verbosity, formatter):
     e = CosmologEvent.from_json(line)
 
     if verbosity < e['level']:
         return
 
-    timestamp = _format_timestamp(e['timestamp'], datefmt)
-    origin = blue(e['origin'])
-    stream_name = yellow(e['stream_name'])
-    level = _format_level(e['level'])
-    payload = _format_payload(e['format'], **e['payload'])
-
-    output = _default_fmt.format(
-        timestamp=timestamp,
-        origin=origin,
-        stream_name=stream_name,
-        level=level,
-        payload=payload)
-
-    if no_color:
-        output = _clear_colors(output)
-
-    click.echo(output)
-
-
-def _format_exception(line, e, no_color):
-    msg = 'Failed to interpret \'{}\': {}'
-    msg = red(msg.format(line, e.message))
-    if no_color:
-        msg = _clear_colors(msg)
-    return msg
+    click.echo(formatter.event_format(e))
 
 
 @cli.command()
@@ -159,11 +67,15 @@ def human(verbosity, datefmt, no_color):
     cat myapp.log | human -v 400 --datefmt "%Y-%m-%d %H:%M:%S"
 
     '''
+    f = CosmologgerHumanFormatter(origin='todo',
+                                  version=0,
+                                  datefmt=datefmt,
+                                  color=not no_color)
     with click.get_text_stream('stdin') as stdin:
         for line in stdin:
             line = line.strip()
             try:
-                process(line, verbosity, datefmt, no_color)
+                process(line, verbosity, f)
             except CosmologgerException as e:
                 msg = _format_exception(line, e, no_color)
                 click.echo(msg, err=True)

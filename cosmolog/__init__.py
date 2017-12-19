@@ -20,10 +20,12 @@ from .cosmologger import CosmologEvent
 from .cosmologger import Cosmologger
 from .cosmologger import CosmologgerException
 from .cosmologger import CosmologgerFormatter
+from .cosmologger import CosmologgerHumanFormatter
 from .cosmologger import LEVELS
 from .cosmologger import setup_logging
 
 __all__ = ['Cosmologger', 'CosmologgerFormatter',
+           'CosmologgerHumanFormatter',
            'CosmologgerException', 'CosmologEvent',
            'LEVELS', 'setup_logging']
 
