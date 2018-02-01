@@ -148,7 +148,9 @@ class CosmologEvent(dict):
     @classmethod
     def _validate_origin(cls, origin):
         if len(origin) > 255:
-            msg = 'Origin length cannot exceed 255 characters'
+            msg = ('Invalid origin: "{}". '
+                   'Origin length cannot exceed 255 characters'
+                   ).format(origin)
             raise CosmologgerException('ValidationError', msg)
         pattern = re.compile("(?!-)[A-Z0-9-]{1,63}(?<!-)$", re.IGNORECASE)
         for part in origin.split('.'):
@@ -160,14 +162,17 @@ class CosmologEvent(dict):
     def _validate_stream_name(cls, stream_name):
         matches = re.match(r'[a-z0-9][a-z0-9._-]+', stream_name)
         if matches is None or matches.group(0) != stream_name:
-            msg = ('Stream name can contain lowercase alphanumeric characters,'
-                   ' and "_", "-", "."')
+            msg = ('Invalid stream_name: "{}". '
+                   'Stream name can contain lowercase alphanumeric '
+                   'characters, and "_", "-", "."').format(stream_name)
             raise CosmologgerException('ValidationError', msg)
 
     @classmethod
     def _validate_payload(cls, payload):
         if not isinstance(payload, collections.Mapping):
-            msg = 'Payload must be a dictionary, not {}'.format(payload)
+            msg = ('Invalid payload: "{}". '
+                   'Payload must be a dictionary, not type {}'
+                   ).format(payload, type(payload))
             raise CosmologgerException(msg)
         return {k: v for k, v in payload.iteritems()
                 if cls._validate_payload_key(k) and
@@ -177,8 +182,9 @@ class CosmologEvent(dict):
     def _validate_payload_key(cls, key):
         m = re.match(r'[a-zA-Z0-9][a-zA-Z0-9_]+', key)
         if m is None or m.group(0) != key:
-            msg = ('Payload keys can contain alphanumeric characters and '
-                   'underscores.')
+            msg = ('Invalid payload key: "{}". '
+                   'Payload keys can contain alphanumeric characters and '
+                   'underscores.').format(key)
             raise CosmologgerException('ValidationError', msg)
         return True
 
@@ -187,8 +193,10 @@ class CosmologEvent(dict):
     @classmethod
     def _validate_payload_value(cls, value):
         if type(value) not in cls._primitive_types:
-            msg = ('Payload values can be any scalar type. No lists, dicts or '
-                   'other complex types. Not {}'.format(type(value)))
+            msg = ('Invalid payload value: "{}". '
+                   'Payload values can be any scalar type. No lists, dicts or '
+                   'other complex types. Not type {}'
+                   ).format(value, type(value))
             raise CosmologgerException('ValidationError', msg)
         return True
 
