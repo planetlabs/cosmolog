@@ -20,6 +20,7 @@ import logging
 import logging.config
 import re
 import socket
+import string
 
 from datetime import datetime
 from dateutil.parser import parse as dateparse
@@ -180,11 +181,11 @@ class CosmologEvent(dict):
 
     @classmethod
     def _validate_payload_key(cls, key):
-        m = re.match(r'[a-zA-Z0-9][a-zA-Z0-9_]+', key)
+        m = re.match(r'[a-zA-Z0-9][a-zA-Z0-9_\-\.]+', key)
         if m is None or m.group(0) != key:
             msg = ('Invalid payload key: "{}". '
-                   'Payload keys can contain alphanumeric characters and '
-                   'underscores.').format(key)
+                   'Payload keys can contain alphanumeric characters, '
+                   'underscores, dashes, and dots.'.format(key))
             raise CosmologgerException('ValidationError', msg)
         return True
 
@@ -311,6 +312,12 @@ _default_datefmt = {
 }
 
 
+class _PayloadFormatter(string.Formatter):
+    # https://stackoverflow.com/questions/7934620/python-dots-in-the-name-of-variable-in-a-format-string  # noqa
+    def get_field(self, field_name, args, kwargs):
+        return (self.get_value(field_name, args, kwargs), field_name)
+
+
 class CosmologgerHumanFormatter(CosmologgerFormatter):
 
     def __init__(self, *args, **kwargs):
@@ -339,7 +346,7 @@ class CosmologgerHumanFormatter(CosmologgerFormatter):
         fmt, payload = e['format'], e['payload']
         if fmt:
             try:
-                payload = fmt.format(**payload)
+                payload = _PayloadFormatter().vformat(fmt, [], payload)
             except KeyError:
                 payload = 'BadLogFormat("{format}") {payload}'.format(**e)
         else:

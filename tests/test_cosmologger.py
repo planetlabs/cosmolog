@@ -280,3 +280,23 @@ def test_exception_human(cosmolog, cosmolog_setup):
 
     out = logstream.getvalue()
     assert out == 'Apr 13 03:07:53 jupiter.planets.com apollo13: [ERROR] Something bad happened\n{}'.format(tb)  # noqa: E501
+
+
+def test_payload_with_dots(cosmolog, cosmolog_setup):
+    logpath = cosmolog_setup()
+    logger = cosmolog()
+    logger.info(**{'jupiter.ganymede_g': 1.428, 'jupiter.europa_g': 1.315})
+    out = _log_output(logpath)
+    assert out['format'] is None
+    assert out['payload']['jupiter.ganymede_g'] == 1.428
+    assert out['payload']['jupiter.europa_g'] == 1.315
+
+
+def test_payload_with_dashes(cosmolog, cosmolog_setup):
+    logpath = cosmolog_setup()
+    logger = cosmolog()
+    logger.info(**{'jupiter-ganymede_g': 1.428, 'jupiter-europa_g': 1.315})
+    out = _log_output(logpath)
+    assert out['format'] is None
+    assert out['payload']['jupiter-ganymede_g'] == 1.428
+    assert out['payload']['jupiter-europa_g'] == 1.315

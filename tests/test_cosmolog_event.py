@@ -125,3 +125,20 @@ def test_null_values_in_payload(basic_event):
     kwargs['payload']['sensor'] = None
     e = CosmologEvent(**kwargs)
     assert e == kwargs
+
+
+def test_payload_keys_with_dots(basic_event):
+    basic_event['payload'] = {
+        'sun.distance': 146e6,
+        'moon.distance': 384400
+    }
+    e = CosmologEvent(**basic_event)
+    assert e == basic_event
+
+
+def test_payload_keys_with_dashes(basic_event):
+    basic_event['payload'] = {
+        'sun-distance': 146e6,
+    }
+    e = CosmologEvent(**basic_event)
+    assert e == basic_event
