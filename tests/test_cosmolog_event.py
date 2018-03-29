@@ -142,3 +142,9 @@ def test_payload_keys_with_dashes(basic_event):
     }
     e = CosmologEvent(**basic_event)
     assert e == basic_event
+
+
+def test_origin_with_underscores(basic_event):
+    basic_event['origin'] = 'black_hole'
+    e = CosmologEvent(**basic_event)
+    assert e == basic_event

@@ -153,7 +153,7 @@ class CosmologEvent(dict):
                    'Origin length cannot exceed 255 characters'
                    ).format(origin)
             raise CosmologgerException('ValidationError', msg)
-        pattern = re.compile("(?!-)[A-Z0-9-]{1,63}(?<!-)$", re.IGNORECASE)
+        pattern = re.compile("(?!-)[A-Z0-9_-]{1,63}(?<!-)$", re.IGNORECASE)
         for part in origin.split('.'):
             if not pattern.match(part):
                 msg = 'Origin must be a fully qualified domain name'
