@@ -49,3 +49,27 @@ def test_bad_json(cli_tester):
     r = cli_tester([], l)
     assert r.exit_code == 0
     assert r.output == expected
+
+
+def test_payload_keys_with_dots(cli_tester):
+    l = ('{"version": 0, "stream_name": "distances", '
+         '"origin": "earth", '
+         '"timestamp": "2016-09-02T16:34:12.019105Z", '
+         '"format": "distance to sun is {sun.distance}", "level": 400,'
+         '"payload": {"sun.distance": 9}}')
+    expected = 'Sep 02 16:34:12 earth distances: [INFO] distance to sun is 9\n'
+    r = cli_tester([], l)
+    assert r.exit_code == 0
+    assert r.output == expected
+
+
+def test_payload_keys_with_dashes(cli_tester):
+    l = ('{"version": 0, "stream_name": "distances", '
+         '"origin": "earth", '
+         '"timestamp": "2016-09-02T16:34:12.019105Z", '
+         '"format": "distance to sun is {sun-distance}", "level": 400,'
+         '"payload": {"sun-distance": 9}}')
+    expected = 'Sep 02 16:34:12 earth distances: [INFO] distance to sun is 9\n'
+    r = cli_tester([], l)
+    assert r.exit_code == 0
+    assert r.output == expected
