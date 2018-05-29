@@ -161,11 +161,11 @@ class CosmologEvent(dict):
 
     @classmethod
     def _validate_stream_name(cls, stream_name):
-        matches = re.match(r'[a-z0-9][a-z0-9._-]+', stream_name)
+        matches = re.match(r'[a-zA-Z0-9][a-zA-Z0-9._-]+', stream_name)
         if matches is None or matches.group(0) != stream_name:
             msg = ('Invalid stream_name: "{}". '
-                   'Stream name can contain lowercase alphanumeric '
-                   'characters, and "_", "-", "."').format(stream_name)
+                   'Stream name can contain alphanumeric characters '
+                   'and "_", "-", "."').format(stream_name)
             raise CosmologgerException('ValidationError', msg)
 
     @classmethod

@@ -85,6 +85,13 @@ def test_invalid_stream_name(basic_event):
         CosmologEvent.from_dict(basic_event)
 
 
+def test_case_insensitive_stream_name(basic_event):
+    basic_event['stream_name'] = 'raven.FooClient'
+    kwargs = deepcopy(basic_event)
+    e = CosmologEvent(**kwargs)
+    assert e == basic_event
+
+
 def test_nested_payload_not_allowed(basic_event):
     basic_event['payload'] = {
         'turtle': {
