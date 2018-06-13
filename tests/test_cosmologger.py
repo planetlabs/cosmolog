@@ -300,3 +300,40 @@ def test_payload_with_dashes(cosmolog, cosmolog_setup):
     assert out['format'] is None
     assert out['payload']['jupiter-ganymede_g'] == 1.428
     assert out['payload']['jupiter-europa_g'] == 1.315
+
+
+def test_user_specified_exc_info(cosmolog, cosmolog_setup):
+    logpath = cosmolog_setup()
+    logger = cosmolog()
+
+    class DeorbitException(Exception):
+        pass
+
+    def fly():
+        raise DeorbitException('Panic. Deorbiting.')
+    try:
+        fly()
+    except DeorbitException:
+        logger.exception('Problem flying.', exc_info=True)
+
+    out = _log_output(logpath)
+    assert 'exc_text' in out['payload']
+    assert out['payload']['exc_text'] is not None
+
+
+def test_user_specified_exc_info_false(cosmolog, cosmolog_setup):
+    logpath = cosmolog_setup()
+    logger = cosmolog()
+
+    class DeorbitException(Exception):
+        pass
+
+    def fly():
+        raise DeorbitException('Panic. Deorbiting.')
+    try:
+        fly()
+    except DeorbitException:
+        logger.exception('Problem flying.', exc_info=False)
+
+    out = _log_output(logpath)
+    assert 'exc_text' not in out['payload']
