@@ -230,7 +230,9 @@ class Cosmologger(object):
         return self.fatal(*args, **kwargs)
 
     def exception(self, *args, **kwargs):
-        return self.error(*args, exc_info=1, **kwargs)
+        if 'exc_info' not in kwargs:
+            kwargs['exc_info'] = 1
+        return self.error(*args, **kwargs)
 
     def error(self, *args, **kwargs):
         return self.log(logging.ERROR, *args, **kwargs)
