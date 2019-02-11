@@ -20,10 +20,7 @@ import logging.config
 import pytest
 import traceback
 
-try:
-    import cStringIO as StringIO
-except ImportError:
-    import StringIO
+from six import StringIO
 
 from freezegun import freeze_time
 
@@ -38,7 +35,7 @@ from cosmolog import (setup_logging,
 def cosmolog_setup():
     '''Sets up cosmolog and returns the log file as a StringIO object'''
     def prepare_cosmolog_setup(level='INFO', origin=None, formatter='cosmolog'):  # noqa: E501
-        log_stream = StringIO.StringIO()
+        log_stream = StringIO()
         origin = origin or 'jupiter.planets.com'
         custom_config = {
             'version': 1,

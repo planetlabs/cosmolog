@@ -17,7 +17,7 @@
 import pytest
 
 from click.testing import CliRunner
-from StringIO import StringIO
+from six import StringIO
 
 from cosmolog.bin.cli import human
 
