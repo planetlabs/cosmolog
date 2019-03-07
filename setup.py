@@ -46,6 +46,7 @@ setup(name='cosmolog',
               'pytest>=3.0.2',
               'flake8==3.2.0',
               'freezegun==0.3.9',
+              'tox==2.9.1',
           ]
       },
       entry_points='''

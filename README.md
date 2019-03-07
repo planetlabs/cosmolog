@@ -156,4 +156,4 @@ appended with `'\n{exc_text}'`.
 ## Development
 
     pip install -e .[test]
-    py.test
+    tox
