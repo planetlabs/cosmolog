@@ -27,7 +27,7 @@ def cli():
 
 
 def _format_exception(line, e, no_color):
-    msg = 'Failed to interpret \'{}\': {}'.format(line, e.message)
+    msg = 'Failed to interpret \'{}\': {}'.format(line, e.args[0])
     if not no_color:
         msg = '\033[31m{}\033[0m'.format(msg)
     return msg

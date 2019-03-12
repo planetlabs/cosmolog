@@ -22,6 +22,8 @@ import re
 import socket
 import string
 
+import six
+
 from datetime import datetime
 from dateutil.parser import parse as dateparse
 from pytz import utc
@@ -114,7 +116,7 @@ class CosmologEvent(dict):
         try:
             d = json.loads(j)
         except ValueError as e:
-            raise CosmologgerException(e.message)
+            raise CosmologgerException(e.args[0])
         return cls.from_dict(d)
 
     @property
@@ -132,12 +134,12 @@ class CosmologEvent(dict):
             pass
         elif t == 'now':
             t = datetime.now(utc)
-        elif isinstance(t, basestring):
+        elif isinstance(t, six.string_types):
             try:
                 t = datetime.utcfromtimestamp(float(t))
             except ValueError:
                 t = dateparse(t)
-        elif isinstance(t, (int, float, long)):
+        elif isinstance(t, six.integer_types + (float,)):
             t = datetime.utcfromtimestamp(t)
         else:
             msg = 'Unable to parse {} ({}) to UTC time'.format(t, type(t))
@@ -175,7 +177,7 @@ class CosmologEvent(dict):
                    'Payload must be a dictionary, not type {}'
                    ).format(payload, type(payload))
             raise CosmologgerException(msg)
-        return {k: v for k, v in payload.iteritems()
+        return {k: v for k, v in six.iteritems(payload)
                 if cls._validate_payload_key(k) and
                 cls._validate_payload_value(v)}
 
@@ -189,7 +191,7 @@ class CosmologEvent(dict):
             raise CosmologgerException('ValidationError', msg)
         return True
 
-    _primitive_types = (bool, int, float, long, str, unicode, type(None))
+    _primitive_types = (bool, float, type(None), str) + six.integer_types
 
     @classmethod
     def _validate_payload_value(cls, value):
@@ -353,7 +355,7 @@ class CosmologgerHumanFormatter(CosmologgerFormatter):
                 payload = 'BadLogFormat("{format}") {payload}'.format(**e)
         else:
             payload = ', '.join('{}: {}'.format(k, v)
-                                for k, v in payload.iteritems())
+                                for k, v in six.iteritems(payload))
 
         output = self._format.format(
             timestamp=timestamp,
