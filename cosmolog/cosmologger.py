@@ -25,6 +25,7 @@ import string
 from datetime import datetime
 from dateutil.parser import parse as dateparse
 from pytz import utc
+from past.builtins import long, unicode
 
 
 FATAL = 100
@@ -114,7 +115,7 @@ class CosmologEvent(dict):
         try:
             d = json.loads(j)
         except ValueError as e:
-            raise CosmologgerException(e.message)
+            raise CosmologgerException(str(e))
         return cls.from_dict(d)
 
     @property

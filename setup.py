@@ -38,6 +38,7 @@ setup(name='cosmolog',
       packages=find_packages(exclude=['tests']),
       install_requires=[
           'click>=6.3',
+          'future>=0.17',
           'pytz>=2015.7',
           'python-dateutil>=2.4.2',
       ],
@@ -45,7 +46,7 @@ setup(name='cosmolog',
           'test': [
               'pytest>=3.0.2',
               'flake8==3.2.0',
-              'freezegun==0.3.9',
+              'freezegun==0.3.11',
               'tox==2.9.1',
           ]
       },

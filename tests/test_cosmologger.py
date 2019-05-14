@@ -21,9 +21,9 @@ import pytest
 import traceback
 
 try:
-    import cStringIO as StringIO
+    import cStringIO.StringIO as StringIO
 except ImportError:
-    import StringIO
+    from io import StringIO
 
 from freezegun import freeze_time
 
@@ -38,7 +38,7 @@ from cosmolog import (setup_logging,
 def cosmolog_setup():
     '''Sets up cosmolog and returns the log file as a StringIO object'''
     def prepare_cosmolog_setup(level='INFO', origin=None, formatter='cosmolog'):  # noqa: E501
-        log_stream = StringIO.StringIO()
+        log_stream = StringIO()
         origin = origin or 'jupiter.planets.com'
         custom_config = {
             'version': 1,
@@ -80,7 +80,8 @@ def cosmolog():
 
 
 def _log_output(stream):
-    logline = stream.getvalue().split('\n').pop(0)
+    logline = stream.getvalue()  # .split('\n').pop(0)
+    print(logline)
     return json.loads(logline)
 
 
