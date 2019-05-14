@@ -20,10 +20,7 @@ import logging.config
 import pytest
 import traceback
 
-try:
-    import cStringIO.StringIO as StringIO
-except ImportError:
-    from io import StringIO
+from io import StringIO
 
 from freezegun import freeze_time
 
@@ -80,8 +77,7 @@ def cosmolog():
 
 
 def _log_output(stream):
-    logline = stream.getvalue()  # .split('\n').pop(0)
-    print(logline)
+    logline = stream.getvalue().split('\n').pop(0)
     return json.loads(logline)
 
 
