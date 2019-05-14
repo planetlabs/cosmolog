@@ -115,7 +115,7 @@ class CosmologEvent(dict):
         try:
             d = json.loads(j)
         except ValueError as e:
-            raise CosmologgerException(str(e))
+            raise CosmologgerException(unicode(e))
         return cls.from_dict(d)
 
     @property

@@ -20,7 +20,10 @@ import logging.config
 import pytest
 import traceback
 
-from io import StringIO
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 from freezegun import freeze_time
 
@@ -107,6 +110,7 @@ def test_log_message(cosmolog, cosmolog_setup):
     logstream = cosmolog_setup()
     logger = cosmolog()
     logger.info('the pale blue dot')
+    print(logstream.getvalue())
     out = _log_output(logstream)
     assert out['format'] == 'the pale blue dot'
 
