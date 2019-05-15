@@ -25,7 +25,7 @@ from cosmolog.bin.cli import cli
 
 @pytest.fixture
 def random_name(length=6):
-    return ''.join(random.choice(string.lowercase) for i in xrange(length))
+    return ''.join(random.choice(string.lowercase) for i in range(length))
 
 
 @pytest.fixture

@@ -1,11 +1,10 @@
-language: python
+language: generic
 dist: bionic
-python:
-- 2.7
-- 3.6
 env:
 - EXTRAS='[test]'
 install:
+- apt-get update
+- apt-get install -y python-pip python3-pip
 - pip install -e .${EXTRAS}
 before_script:
 - flake8 .
