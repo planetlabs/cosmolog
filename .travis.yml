@@ -1,6 +1,8 @@
 language: python
+dist: bionic
 python:
 - 2.7
+- 3.6
 env:
 - EXTRAS='[test]'
 install:
