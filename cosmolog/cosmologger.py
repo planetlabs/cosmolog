@@ -25,7 +25,7 @@ import string
 from datetime import datetime
 from dateutil.parser import parse as dateparse
 from pytz import utc
-from past.builtins import long, unicode
+from past.builtins import long, unicode, basestring
 
 
 FATAL = 100
@@ -176,7 +176,7 @@ class CosmologEvent(dict):
                    'Payload must be a dictionary, not type {}'
                    ).format(payload, type(payload))
             raise CosmologgerException(msg)
-        return {k: v for k, v in payload.iteritems()
+        return {k: v for k, v in payload.items()
                 if cls._validate_payload_key(k) and
                 cls._validate_payload_value(v)}
 
@@ -259,8 +259,10 @@ class Cosmologger(object):
         exc_info = kwargs.pop('exc_info', 0)
 
         if not args:
-            return self.logger.log(lvl, None, exc_info=exc_info, extra=extras)
-        return self.logger.log(lvl, *args, exc_info=exc_info, extra=extras)
+            return self.logger.log(
+                lvl, None, exc_info=exc_info, extra=extras)
+        return self.logger.log(
+            lvl, *args, exc_info=exc_info, extra=extras)
 
 
 class CosmologgerFormatter(logging.Formatter):
@@ -354,7 +356,7 @@ class CosmologgerHumanFormatter(CosmologgerFormatter):
                 payload = 'BadLogFormat("{format}") {payload}'.format(**e)
         else:
             payload = ', '.join('{}: {}'.format(k, v)
-                                for k, v in payload.iteritems())
+                                for k, v in payload.items())
 
         output = self._format.format(
             timestamp=timestamp,

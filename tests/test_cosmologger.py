@@ -19,6 +19,7 @@ import logging
 import logging.config
 import pytest
 import traceback
+import sys
 
 try:
     from cStringIO import StringIO
@@ -87,13 +88,13 @@ def _log_output(stream):
 def test_stream_is_validated(cosmolog):
     with pytest.raises(CosmologgerException) as e:
         cosmolog(stream_name='Bad:Stream#Name+1.0')
-    assert e.value[0] == 'ValidationError'
+    assert e.value.args[0] == 'ValidationError'
 
 
 def test_origin_is_validated(cosmolog, cosmolog_setup):
     with pytest.raises(CosmologgerException) as e:
         cosmolog_setup(origin='not a fully qualified domain name')
-    assert e.value[0] == 'ValidationError'
+    assert e.value.args[0] == 'ValidationError'
 
 
 def test_required_fields(cosmolog, cosmolog_setup):
@@ -233,15 +234,18 @@ def test_exc_info(cosmolog, cosmolog_setup):
 
     def fail(fmt):
         1 / 0
+    exc = None
 
     try:
         fail('Extra braces for extra fail {}')
     except Exception as e:
-        tb = traceback.format_exc()
+        exc = sys.exc_info()
 
-    logger.error(e, exc_info=1)
+    typ, val, tb = exc
+
+    logger.error(val, exc_info=1)
     out = _log_output(logstream)
-    assert out['format'] == str(e) + '\n{exc_text}'
+    assert out['format'] == str(typ) + '\n{exc_text}'
     assert out['payload'] == {'exc_text': tb.strip()}
 
 
