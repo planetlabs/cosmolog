@@ -261,7 +261,9 @@ def test_exc_info_human(cosmolog, cosmolog_setup):
     try:
         fail('Extra braces for extra fail {}')
     except Exception:
-        tb = traceback.format_exc()
+        pass
+
+    tb = traceback.format_exc()
 
     logger.error('Something bad happened', exc_info=1)
     out = logstream.getvalue()
