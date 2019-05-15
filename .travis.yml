@@ -1,13 +1,15 @@
-language: generic
+language: python
 dist: bionic
 env:
 - EXTRAS='[test]'
 install:
-- apt-get update
-- apt-get install -y python-pip python3-pip
 - pip install -e .${EXTRAS}
-before_script:
-- flake8 .
+matrix:
+  include:
+    - python: 3.6
+      env: TOXENV=lint,py36
+    - python: 2.7
+      env: TOXENV=py27
 script:
 - tox
 deploy:
