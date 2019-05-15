@@ -17,7 +17,6 @@
 import pytest
 
 from click.testing import CliRunner
-from StringIO import StringIO
 
 from cosmolog.bin.cli import human
 
@@ -26,50 +25,55 @@ from cosmolog.bin.cli import human
 def cli_tester():
     def tester(args, stdin):
         runner = CliRunner()
-        stdin = StringIO(stdin)
         return runner.invoke(human, args, catch_exceptions=False, input=stdin)
     return tester
 
 
 def test_one_event(cli_tester):
-    l = ('{"version": 0, "stream_name": "telemetry", '
-         '"origin": "foobar.example.com", '
-         '"timestamp": "2016-09-02T16:34:12.019105Z", '
-         '"format": "s={sensor}", "level": 400,'
-         '"payload": {"sensor": 36.7}}')
+    line = (
+        '{"version": 0, "stream_name": "telemetry", '
+        '"origin": "foobar.example.com", '
+        '"timestamp": "2016-09-02T16:34:12.019105Z", '
+        '"format": "s={sensor}", "level": 400,'
+        '"payload": {"sensor": 36.7} }')
     expected = 'Sep 02 16:34:12 foobar.example.com telemetry: [INFO] s=36.7\n'
-    r = cli_tester([], l)
+    r = cli_tester([], line)
     assert r.exit_code == 0
     assert r.output == expected
 
 
 def test_bad_json(cli_tester):
-    l = '*$'
-    expected = "Failed to interpret '*$': No JSON object could be decoded\n"
-    r = cli_tester([], l)
+    line = '*$'
+    expected = (
+        "Failed to interpret '*$': No JSON object could be decoded\n",
+        "Failed to interpret '*$': Expecting value: line 1 column 1 (char 0)\n"
+    )
+    r = cli_tester([], line)
     assert r.exit_code == 0
-    assert r.output == expected
+    assert r.output in expected
 
 
 def test_payload_keys_with_dots(cli_tester):
-    l = ('{"version": 0, "stream_name": "distances", '
-         '"origin": "earth", '
-         '"timestamp": "2016-09-02T16:34:12.019105Z", '
-         '"format": "distance to sun is {sun.distance}", "level": 400,'
-         '"payload": {"sun.distance": 9}}')
+    line = (
+        '{"version": 0, "stream_name": "distances", '
+        '"origin": "earth", '
+        '"timestamp": "2016-09-02T16:34:12.019105Z", '
+        '"format": "distance to sun is {sun.distance}", "level": 400,'
+        '"payload": {"sun.distance": 9} }')
     expected = 'Sep 02 16:34:12 earth distances: [INFO] distance to sun is 9\n'
-    r = cli_tester([], l)
+    r = cli_tester([], line)
     assert r.exit_code == 0
     assert r.output == expected
 
 
 def test_payload_keys_with_dashes(cli_tester):
-    l = ('{"version": 0, "stream_name": "distances", '
-         '"origin": "earth", '
-         '"timestamp": "2016-09-02T16:34:12.019105Z", '
-         '"format": "distance to sun is {sun-distance}", "level": 400,'
-         '"payload": {"sun-distance": 9}}')
+    line = (
+        '{"version": 0, "stream_name": "distances", '
+        '"origin": "earth", '
+        '"timestamp": "2016-09-02T16:34:12.019105Z", '
+        '"format": "distance to sun is {sun-distance}", "level": 400,'
+        '"payload": {"sun-distance": 9} }')
     expected = 'Sep 02 16:34:12 earth distances: [INFO] distance to sun is 9\n'
-    r = cli_tester([], l)
+    r = cli_tester([], line)
     assert r.exit_code == 0
     assert r.output == expected

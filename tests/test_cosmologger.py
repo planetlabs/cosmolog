@@ -19,11 +19,12 @@ import logging
 import logging.config
 import pytest
 import traceback
+import sys
 
 try:
-    import cStringIO as StringIO
+    from cStringIO import StringIO
 except ImportError:
-    import StringIO
+    from io import StringIO
 
 from freezegun import freeze_time
 
@@ -38,7 +39,7 @@ from cosmolog import (setup_logging,
 def cosmolog_setup():
     '''Sets up cosmolog and returns the log file as a StringIO object'''
     def prepare_cosmolog_setup(level='INFO', origin=None, formatter='cosmolog'):  # noqa: E501
-        log_stream = StringIO.StringIO()
+        log_stream = StringIO()
         origin = origin or 'jupiter.planets.com'
         custom_config = {
             'version': 1,
@@ -87,13 +88,13 @@ def _log_output(stream):
 def test_stream_is_validated(cosmolog):
     with pytest.raises(CosmologgerException) as e:
         cosmolog(stream_name='Bad:Stream#Name+1.0')
-    assert e.value[0] == 'ValidationError'
+    assert e.value.args[0] == 'ValidationError'
 
 
 def test_origin_is_validated(cosmolog, cosmolog_setup):
     with pytest.raises(CosmologgerException) as e:
         cosmolog_setup(origin='not a fully qualified domain name')
-    assert e.value[0] == 'ValidationError'
+    assert e.value.args[0] == 'ValidationError'
 
 
 def test_required_fields(cosmolog, cosmolog_setup):
@@ -232,15 +233,19 @@ def test_exc_info(cosmolog, cosmolog_setup):
 
     def fail(fmt):
         1 / 0
+    exc = None
 
     try:
         fail('Extra braces for extra fail {}')
-    except Exception as e:
-        tb = traceback.format_exc()
+    except Exception:
+        exc = sys.exc_info()
 
-    logger.error(e, exc_info=1)
+    typ, val, tb = exc
+    tb = traceback.format_exc()
+    print((typ, val, tb))
+    logger.error(val, exc_info=1)
     out = _log_output(logstream)
-    assert out['format'] == str(e) + '\n{exc_text}'
+    assert out['format'] == str(val) + '\n{exc_text}'
     assert out['payload'] == {'exc_text': tb.strip()}
 
 
@@ -256,7 +261,9 @@ def test_exc_info_human(cosmolog, cosmolog_setup):
     try:
         fail('Extra braces for extra fail {}')
     except Exception:
-        tb = traceback.format_exc()
+        pass
+
+    tb = traceback.format_exc()
 
     logger.error('Something bad happened', exc_info=1)
     out = logstream.getvalue()

@@ -25,6 +25,7 @@ import string
 from datetime import datetime
 from dateutil.parser import parse as dateparse
 from pytz import utc
+from past.builtins import long, unicode, basestring
 
 
 FATAL = 100
@@ -114,7 +115,7 @@ class CosmologEvent(dict):
         try:
             d = json.loads(j)
         except ValueError as e:
-            raise CosmologgerException(e.message)
+            raise CosmologgerException(unicode(e))
         return cls.from_dict(d)
 
     @property
@@ -175,7 +176,7 @@ class CosmologEvent(dict):
                    'Payload must be a dictionary, not type {}'
                    ).format(payload, type(payload))
             raise CosmologgerException(msg)
-        return {k: v for k, v in payload.iteritems()
+        return {k: v for k, v in payload.items()
                 if cls._validate_payload_key(k) and
                 cls._validate_payload_value(v)}
 
@@ -258,8 +259,10 @@ class Cosmologger(object):
         exc_info = kwargs.pop('exc_info', 0)
 
         if not args:
-            return self.logger.log(lvl, None, exc_info=exc_info, extra=extras)
-        return self.logger.log(lvl, *args, exc_info=exc_info, extra=extras)
+            return self.logger.log(
+                lvl, None, exc_info=exc_info, extra=extras)
+        return self.logger.log(
+            lvl, *args, exc_info=exc_info, extra=extras)
 
 
 class CosmologgerFormatter(logging.Formatter):
@@ -283,7 +286,7 @@ class CosmologgerFormatter(logging.Formatter):
     def _prepare_format(self, record):
         if record.msg is None:
             return None
-        if record.exc_info and '{exc_text}' not in record.msg:
+        if record.exc_info and '{exc_text}' not in str(record.msg):
             return record.getMessage() + '\n{exc_text}'
         return record.getMessage()
 
@@ -353,7 +356,7 @@ class CosmologgerHumanFormatter(CosmologgerFormatter):
                 payload = 'BadLogFormat("{format}") {payload}'.format(**e)
         else:
             payload = ', '.join('{}: {}'.format(k, v)
-                                for k, v in payload.iteritems())
+                                for k, v in payload.items())
 
         output = self._format.format(
             timestamp=timestamp,
