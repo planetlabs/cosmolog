@@ -111,7 +111,6 @@ def test_log_message(cosmolog, cosmolog_setup):
     logstream = cosmolog_setup()
     logger = cosmolog()
     logger.info('the pale blue dot')
-    print(logstream.getvalue())
     out = _log_output(logstream)
     assert out['format'] == 'the pale blue dot'
 
@@ -238,14 +237,15 @@ def test_exc_info(cosmolog, cosmolog_setup):
 
     try:
         fail('Extra braces for extra fail {}')
-    except Exception as e:
+    except Exception:
         exc = sys.exc_info()
 
     typ, val, tb = exc
-
+    tb = traceback.format_exc()
+    print((typ, val, tb))
     logger.error(val, exc_info=1)
     out = _log_output(logstream)
-    assert out['format'] == str(typ) + '\n{exc_text}'
+    assert out['format'] == str(val) + '\n{exc_text}'
     assert out['payload'] == {'exc_text': tb.strip()}
 
 
