@@ -1,9 +1,7 @@
 language: python
 dist: bionic
-env:
-- EXTRAS='[test]'
 install:
-- pip install -e .${EXTRAS}
+- pip install -e .[test] tox
 matrix:
   include:
     - python: 3.6
