@@ -44,10 +44,13 @@ def test_one_event(cli_tester):
 
 def test_bad_json(cli_tester):
     line = '*$'
-    expected = "Failed to interpret '*$': No JSON object could be decoded\n"
+    expected = (
+        "Failed to interpret '*$': No JSON object could be decoded\n",
+        "Failed to interpret '*$': Expecting value: line 1 column 1 (char 0)\n"
+    )
     r = cli_tester([], line)
     assert r.exit_code == 0
-    assert r.output == expected
+    assert r.output in expected
 
 
 def test_payload_keys_with_dots(cli_tester):
