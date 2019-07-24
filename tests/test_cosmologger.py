@@ -27,6 +27,7 @@ except ImportError:
     from io import StringIO
 
 from freezegun import freeze_time
+from builtins import str as newstr
 
 from cosmolog import (setup_logging,
                       Cosmologger,
@@ -163,6 +164,16 @@ def test_human_format_and_payload(cosmolog, cosmolog_setup):
     assert logline == 'Apr 13 03:07:53 jupiter.planets.com star_stuff: [ERROR] the oxygen tank has exploded'  # noqa: E501
 
 
+@freeze_time("1970-04-13T03:07:53Z")
+def test_human_format_and_payload_with_newstr(cosmolog, cosmolog_setup):
+    logstream = cosmolog_setup(formatter='human')
+    logger = cosmolog()
+    msg = 'the {component} has exploded'
+    logger.error(msg, component=newstr('oxygen tank'))
+    logline = logstream.getvalue().split('\n').pop(0)
+    assert logline == 'Apr 13 03:07:53 jupiter.planets.com star_stuff: [ERROR] the oxygen tank has exploded'  # noqa: E501
+
+
 def test_payload_is_validated(cosmolog, cosmolog_setup, capsys):
     cosmolog_setup()
     logger = cosmolog()
@@ -171,6 +182,15 @@ def test_payload_is_validated(cosmolog, cosmolog_setup, capsys):
     out, err = capsys.readouterr()
     assert 'CosmologgerException' in err
     assert 'ValidationError' in err
+
+
+def test_newstr_is_accepted(cosmolog, cosmolog_setup, capsys):
+    cosmolog_setup()
+    logger = cosmolog()
+    logger.info('someone is from the future: {futstr}',
+                futstr=newstr("hi from the future"))
+    out, err = capsys.readouterr()
+    assert not err
 
 
 @freeze_time("1970-04-13T03:07:53Z")
