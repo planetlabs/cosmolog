@@ -26,6 +26,7 @@ from datetime import datetime
 from dateutil.parser import parse as dateparse
 from pytz import utc
 from past.builtins import long, unicode, basestring
+from builtins import str as newstr
 
 
 FATAL = 100
@@ -190,7 +191,8 @@ class CosmologEvent(dict):
             raise CosmologgerException('ValidationError', msg)
         return True
 
-    _primitive_types = (bool, int, float, long, str, unicode, type(None))
+    _primitive_types = (bool, int, float, long, str, unicode, type(None),
+                        newstr)
 
     @classmethod
     def _validate_payload_value(cls, value):
