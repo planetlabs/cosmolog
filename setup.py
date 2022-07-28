@@ -46,7 +46,7 @@ setup(name='cosmolog',
           'test': [
               'pytest>=3.0.2',
               'flake8==3.2.0',
-              'freezegun==0.3.11',
+              'freezegun==1.2.1',
               'tox==2.9.1',
           ]
       },
