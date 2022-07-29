@@ -1,0 +1,29 @@
+stages:
+  - build
+  - publish
+
+build:
+  stage: build
+  image: {{PLANET_CI_IMAGE}}
+  script:
+    - pip install .[test]
+    - py.test
+  tags:
+    - {{PLANET_RUNNER_TAG}}
+  artifacts:
+    paths:
+      - version.txt
+
+publish-pypi:
+  stage: publish
+  image: {{PLANET_CI_IMAGE}}
+  script:
+    - rm -rf dist
+    - python3 setup.py sdist bdist_wheel
+    - find dist
+    - echo twine upload -r pypi --skip-existing dist/*
+  tags:
+    - {{PLANET_RUNNER_TAG}}
+  only:
+    - tags
+    - /^[0-9]+(\.[0-9]+)*$/

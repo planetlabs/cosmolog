@@ -1,0 +1,20 @@
+name: Run tests
+on: [push, pull_request]
+
+jobs:
+  test-client:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: [3.6, 3.8, 3.9, '3.10']
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v2.2.2
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - name: Test
+        run: |
+          pip install -e .[test]
+          py.test
