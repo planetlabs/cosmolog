@@ -14,10 +14,6 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-try:
-    import collections.abc as collections
-except ImportError:
-    import collections
 import json
 import logging
 import logging.config
@@ -30,6 +26,10 @@ from dateutil.parser import parse as dateparse
 from pytz import utc
 from past.builtins import long, unicode, basestring
 from builtins import str as newstr
+try:
+    from collections.abc import Mapping
+except ImportError:
+    from collections import Mapping
 
 
 FATAL = 100
@@ -175,7 +175,7 @@ class CosmologEvent(dict):
 
     @classmethod
     def _validate_payload(cls, payload):
-        if not isinstance(payload, collections.Mapping):
+        if not isinstance(payload, Mapping):
             msg = ('Invalid payload: "{}". '
                    'Payload must be a dictionary, not type {}'
                    ).format(payload, type(payload))
