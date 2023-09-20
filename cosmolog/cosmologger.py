@@ -354,11 +354,13 @@ class CosmologgerHumanFormatter(CosmologgerFormatter):
             level = LEVELS[e['level']]
 
         fmt, payload = e['format'], e['payload']
-        if fmt:
+        if fmt and payload:
             try:
                 payload = _PayloadFormatter().vformat(fmt, [], payload)
             except KeyError:
                 payload = 'BadLogFormat("{format}") {payload}'.format(**e)
+        elif fmt and not payload:
+            payload = fmt
         else:
             payload = ', '.join('{}: {}'.format(k, v)
                                 for k, v in payload.items())
