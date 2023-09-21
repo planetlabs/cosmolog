@@ -203,6 +203,29 @@ def test_human_format_invalid(cosmolog, cosmolog_setup):
     assert logline == 'Apr 13 03:07:53 jupiter.planets.com star_stuff: [ERROR] BadLogFormat("the {blarg} has exploded") {\'component\': \'oxygen tank\'}'  # noqa: E501
 
 
+def test_json_not_bad(cosmolog, cosmolog_setup):
+    logstream = cosmolog_setup(formatter='human')
+    logger = cosmolog()
+    msg = 'sometimes somebody logs a {"json": "data"} from space. That is okay'
+    logger.info(msg)
+    logline = logstream.getvalue().split('\n').pop(0)
+    assert 'BadLogFormat' not in logline
+
+
+def test_dicts_not_bad(cosmolog, cosmolog_setup):
+    logstream = cosmolog_setup(formatter='human')
+    logger = cosmolog()
+    d = {
+        "orbit": "sso",
+        "camera": "nadir",
+        "radio": "zenith"
+    }
+    msg = f'sometimes somebody logs a dict {d}'
+    logger.info(msg)
+    logline = logstream.getvalue().split('\n').pop(0)
+    assert 'BadLogFormat' not in logline
+
+
 def test_can_log_all_levels(cosmolog, cosmolog_setup):
     logstream = cosmolog_setup('DEBUG')
     logger = cosmolog()
