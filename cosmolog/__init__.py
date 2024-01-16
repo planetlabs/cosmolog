@@ -13,8 +13,7 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations under
 # the License.
-
-from ._version import get_versions
+import sys
 
 from .cosmologger import CosmologEvent
 from .cosmologger import Cosmologger
@@ -29,5 +28,10 @@ __all__ = ['Cosmologger', 'CosmologgerFormatter',
            'CosmologgerException', 'CosmologEvent',
            'LEVELS', 'setup_logging']
 
-__version__ = get_versions()['version']
-del get_versions
+
+if sys.version_info >= (3, 8):
+    from importlib.metadata import version
+else:
+    from importlib_metadata import version
+
+__version__ = version
