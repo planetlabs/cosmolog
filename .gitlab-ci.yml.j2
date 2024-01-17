@@ -19,7 +19,7 @@ publish-pypi:
   image: {{PLANET_CI_IMAGE}}
   script:
     - rm -rf dist
-    - python3 setup.py sdist bdist_wheel
+    - python -m build
     - find dist
     - twine upload -r pypi --skip-existing dist/*
   tags:

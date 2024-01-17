@@ -24,8 +24,6 @@ import string
 from datetime import datetime
 from dateutil.parser import parse as dateparse
 from pytz import utc
-from past.builtins import long, unicode, basestring
-from builtins import str as newstr
 try:
     from collections.abc import Mapping
 except ImportError:
@@ -119,7 +117,7 @@ class CosmologEvent(dict):
         try:
             d = json.loads(j)
         except ValueError as e:
-            raise CosmologgerException(unicode(e))
+            raise CosmologgerException(str(e))
         return cls.from_dict(d)
 
     @property
@@ -137,12 +135,12 @@ class CosmologEvent(dict):
             pass
         elif t == 'now':
             t = datetime.now(utc)
-        elif isinstance(t, basestring):
+        elif isinstance(t, str):
             try:
                 t = datetime.utcfromtimestamp(float(t))
             except ValueError:
                 t = dateparse(t)
-        elif isinstance(t, (int, float, long)):
+        elif isinstance(t, (int, float)):
             t = datetime.utcfromtimestamp(t)
         else:
             msg = 'Unable to parse {} ({}) to UTC time'.format(t, type(t))
@@ -194,8 +192,7 @@ class CosmologEvent(dict):
             raise CosmologgerException('ValidationError', msg)
         return True
 
-    _primitive_types = (bool, int, float, long, str, unicode, type(None),
-                        newstr)
+    _primitive_types = (bool, int, float, str, bytes, type(None))
 
     @classmethod
     def _validate_payload_value(cls, value):
