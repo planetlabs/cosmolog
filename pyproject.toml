@@ -58,7 +58,7 @@ test = [
 human = "cosmolog.bin.cli:human"
 
 [tool.setuptools]
-packages = ["cosmolog"]
+packages = ["cosmolog", "cosmolog.bin"]
 
 [tool.versioningit]
 default-version = "0.0.0"  # for shallow clones in CI
