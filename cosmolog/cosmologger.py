@@ -124,6 +124,21 @@ class CosmologEvent(dict):
     def json(self):
         return json.dumps(self)
 
+    @property
+    def message(self):
+        fmt, payload = self['format'], self['payload']
+        if fmt and payload:
+            try:
+                message = _PayloadFormatter().vformat(fmt, [], payload)
+            except KeyError:
+                message = 'BadLogFormat("{format}") {payload}'.format(**self)
+        elif fmt and not payload:
+            message = fmt
+        else:
+            message = ', '.join('{}: {}'.format(k, v)
+                                for k, v in payload.items())
+        return message
+
     @classmethod
     def get_default_origin(self):
         return socket.getfqdn()
@@ -350,24 +365,12 @@ class CosmologgerHumanFormatter(CosmologgerFormatter):
             stream_name = e['stream_name']
             level = LEVELS[e['level']]
 
-        fmt, payload = e['format'], e['payload']
-        if fmt and payload:
-            try:
-                payload = _PayloadFormatter().vformat(fmt, [], payload)
-            except KeyError:
-                payload = 'BadLogFormat("{format}") {payload}'.format(**e)
-        elif fmt and not payload:
-            payload = fmt
-        else:
-            payload = ', '.join('{}: {}'.format(k, v)
-                                for k, v in payload.items())
-
         output = self._format.format(
             timestamp=timestamp,
             origin=origin,
             stream_name=stream_name,
             level=level,
-            payload=payload)
+            payload=e.message)
 
         return output
 
