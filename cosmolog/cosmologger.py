@@ -156,7 +156,7 @@ class CosmologEvent(dict):
             except ValueError:
                 t = dateparse(t)
         elif isinstance(t, (int, float)):
-            t = datetime.utcfromtimestamp(t)
+            t = datetime.fromtimestamp(t, utc)
         else:
             msg = 'Unable to parse {} ({}) to UTC time'.format(t, type(t))
             raise CosmologgerException(msg)
