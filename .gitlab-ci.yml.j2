@@ -6,7 +6,7 @@ build:
   stage: build
   image: {{PLANET_CI_IMAGE}}
   script:
-    - pip install .[test]
+    - pip install --break-system-packages .[test]
     - py.test
   tags:
     - {{PLANET_RUNNER_TAG}}
